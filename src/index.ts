@@ -10,6 +10,9 @@ import { loadImageFile } from "./image-file.js";
 export default function terminalPlus(pi: ExtensionAPI) {
 	pi.on("input", async (event, ctx) => {
 		if (event.source !== "interactive") return { action: "continue" };
+		if (process.env.PI_TERMINAL_PLUS_DEBUG === "1") {
+			ctx.ui.notify(`terminal-plus raw: ${JSON.stringify(event.text).slice(0, 200)}`, "info");
+		}
 
 		const candidates = findPastedPaths(event.text);
 		if (candidates.length === 0) return { action: "continue" };
