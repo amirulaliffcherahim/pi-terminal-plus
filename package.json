@@ -1,0 +1,23 @@
+{
+  "name": "pi-terminal-plus",
+  "version": "0.1.0",
+  "description": "Attach pasted or dragged image files to Pi prompts as native image input, for models that accept images",
+  "type": "module",
+  "main": "./src/index.ts",
+  "license": "MIT",
+  "keywords": ["pi-package", "pi-extension", "image", "clipboard", "drag-and-drop"],
+  "files": ["src"],
+  "engines": {
+    "node": ">=22.15.0"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.ts"
+  },
+  "pi": {
+    "extensions": ["./src/index.ts"]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-ai": ">=0.80.0",
+    "@earendil-works/pi-coding-agent": ">=0.80.0"
+  }
+}
