@@ -1,12 +1,25 @@
 {
   "name": "pi-terminal-plus",
   "version": "0.1.0",
-  "description": "Attach pasted or dragged image files to Pi prompts as native image input, for models that accept images",
+  "description": "Attach pasted or dragged files to Pi prompts: images natively, documents converted to Markdown text",
   "type": "module",
   "main": "./src/index.ts",
   "license": "MIT",
-  "keywords": ["pi-package", "pi-extension", "image", "clipboard", "drag-and-drop"],
-  "files": ["src"],
+  "keywords": [
+    "pi-package",
+    "pi-extension",
+    "image",
+    "document",
+    "markdown",
+    "pdf",
+    "clipboard",
+    "drag-and-drop"
+  ],
+  "files": [
+    "src",
+    "LICENSE",
+    "README.md"
+  ],
   "engines": {
     "node": ">=22.15.0"
   },
@@ -14,10 +27,18 @@
     "test": "node --test test/*.test.ts"
   },
   "pi": {
-    "extensions": ["./src/index.ts"]
+    "extensions": [
+      "./src/index.ts"
+    ]
   },
   "peerDependencies": {
     "@earendil-works/pi-ai": ">=0.80.0",
     "@earendil-works/pi-coding-agent": ">=0.80.0"
+  },
+  "dependencies": {
+    "mammoth": "1.13.0",
+    "turndown": "7.2.4",
+    "unpdf": "1.9.1",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   }
 }

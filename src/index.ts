@@ -3,6 +3,7 @@ import type { ImageContent } from "@earendil-works/pi-ai";
 import { findPastedPaths } from "./paths.js";
 import { loadImageFile } from "./image-file.js";
 import { formatTextBlock, loadTextFile, MAX_TOTAL_TEXT_BYTES } from "./text-file.js";
+import { convertToMarkdownTool } from "./convert-tool.js";
 
 /**
  * Turns pasted or dropped file paths into prompt content on submit.
@@ -10,6 +11,8 @@ import { formatTextBlock, loadTextFile, MAX_TOTAL_TEXT_BYTES } from "./text-file
  * Decided at submit time so the active model is the one that will actually receive the request.
  */
 export default function terminalPlus(pi: ExtensionAPI) {
+	pi.registerTool(convertToMarkdownTool);
+
 	pi.on("input", async (event, ctx) => {
 		if (event.source !== "interactive") return { action: "continue" };
 		if (process.env.PI_TERMINAL_PLUS_DEBUG === "1") {

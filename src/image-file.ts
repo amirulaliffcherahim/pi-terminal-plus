@@ -1,4 +1,5 @@
 import { open, stat } from "node:fs/promises";
+import { extname } from "node:path";
 
 /**
  * Anthropic rejects images over 5 MB. Base64 adds about a third, so the raw limit
@@ -23,6 +24,13 @@ export type ImageFileFailure = "missing" | "not-image" | "too-large" | "error";
 export type ImageFileResult =
 	| { ok: true; image: ImageFileLoad }
 	| { ok: false; kind: ImageFileFailure; reason: string };
+
+const IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif"]);
+
+/** Name-based check for routing only. Content is still verified before any image is sent. */
+export function isImagePath(path: string): boolean {
+	return IMAGE_EXTENSIONS.has(extname(path).toLowerCase());
+}
 
 /** Detects the image type from file content, never from the file name. */
 export function sniffImageMime(header: Uint8Array): SupportedImageMime | undefined {
