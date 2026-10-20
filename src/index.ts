@@ -11,14 +11,22 @@ export default function terminalPlus(pi: ExtensionAPI) {
 	pi.on("input", async (event, ctx) => {
 		if (event.source !== "interactive") return { action: "continue" };
 
+		const candidates = findPastedPaths(event.text);
+		if (candidates.length === 0) {
+			ctx.ui.notify(`terminal-plus: no absolute path found in input`, "info");
+			return { action: "continue" };
+		}
+
 		const attachments: ImageContent[] = [];
 		const rejected: string[] = [];
-		for (const candidate of findPastedPaths(event.text)) {
+		for (const candidate of candidates) {
 			const result = await loadImageFile(candidate.path);
 			if (result.ok) {
 				attachments.push({ type: "image", data: result.image.data, mimeType: result.image.mimeType });
 			} else if (result.kind === "too-large" || result.kind === "error") {
 				rejected.push(`${candidate.path}: ${result.reason}`);
+			} else {
+				ctx.ui.notify(`terminal-plus: skipped ${candidate.path} (${result.reason})`, "info");
 			}
 		}
 
