@@ -38,6 +38,17 @@ export class PlaceholderRegistry {
 		return new Set(this.paths.keys());
 	}
 
+	/**
+	 * Drops entries whose marker is gone from `text`, and restarts numbering once none remain.
+	 * Called after edits so deleting every marker makes the next paste #1 again.
+	 */
+	prune(text: string): void {
+		const present = new Set<number>();
+		for (const match of text.matchAll(MARKER)) present.add(Number(match[2]));
+		for (const id of [...this.paths.keys()]) if (!present.has(id)) this.paths.delete(id);
+		if (this.paths.size === 0) this.counter = 0;
+	}
+
 	/** Clears the map after a submit so numbering restarts with the next prompt. */
 	reset(): void {
 		this.paths.clear();
@@ -98,4 +109,11 @@ export function mergeMarkerSegments<T extends TextSegment>(
 		}
 	}
 	return merged;
+}
+
+/** Adds a space on each side of a marker that would otherwise touch neighbouring text. */
+export function padMarker(marker: string, before: string | undefined, after: string | undefined): string {
+	const lead = before !== undefined && before !== "" && !/\s/.test(before) ? " " : "";
+	const trail = after !== undefined && after !== "" && !/\s/.test(after) ? " " : "";
+	return `${lead}${marker}${trail}`;
 }

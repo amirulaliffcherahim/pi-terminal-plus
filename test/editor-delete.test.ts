@@ -30,7 +30,7 @@ test("Backspace removes only the marker next to the cursor and keeps other text"
 	editor.insertTextAtCursor("C:\\a\\one.png");
 	editor.insertTextAtCursor("C:\\a\\two.docx");
 	editor.handleInput(BACKSPACE);
-	assert.equal(editor.getText(), "hi[image #1: one.png]");
+	assert.equal(editor.getText(), "hi [image #1: one.png] ");
 });
 
 test("one Delete before a marker removes the whole marker", () => {

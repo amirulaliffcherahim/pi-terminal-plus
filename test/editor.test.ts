@@ -41,5 +41,5 @@ test("two pasted files are numbered in order", () => {
 	const { editor } = makeEditor();
 	editor.insertTextAtCursor("C:\\a\\one.png");
 	editor.insertTextAtCursor("C:\\a\\two.docx");
-	assert.equal(editor.getText(), "[image #1: one.png][file #2: two.docx]");
+	assert.equal(editor.getText(), "[image #1: one.png] [file #2: two.docx]");
 });
