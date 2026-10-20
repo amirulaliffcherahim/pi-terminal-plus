@@ -12,10 +12,7 @@ export default function terminalPlus(pi: ExtensionAPI) {
 		if (event.source !== "interactive") return { action: "continue" };
 
 		const candidates = findPastedPaths(event.text);
-		if (candidates.length === 0) {
-			ctx.ui.notify(`terminal-plus: no absolute path found in input`, "info");
-			return { action: "continue" };
-		}
+		if (candidates.length === 0) return { action: "continue" };
 
 		const attachments: ImageContent[] = [];
 		const rejected: string[] = [];
