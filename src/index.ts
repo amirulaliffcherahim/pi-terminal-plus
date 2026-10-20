@@ -1,9 +1,13 @@
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import { basename } from "node:path";
 import type { ImageContent } from "@earendil-works/pi-ai";
 import { findPastedPaths } from "./paths.js";
 import { loadImageFile } from "./image-file.js";
 import { formatTextBlock, loadTextFile, MAX_TOTAL_TEXT_BYTES } from "./text-file.js";
 import { convertToMarkdownTool } from "./convert-tool.js";
+import { convertToMarkdown, documentKindOf } from "./convert.js";
+import { PlaceholderEditor } from "./placeholder-editor.js";
+import { PlaceholderRegistry } from "./placeholders.js";
 
 /**
  * Turns pasted or dropped file paths into prompt content on submit.
@@ -11,16 +15,24 @@ import { convertToMarkdownTool } from "./convert-tool.js";
  * Decided at submit time so the active model is the one that will actually receive the request.
  */
 export default function terminalPlus(pi: ExtensionAPI) {
+	const registry = new PlaceholderRegistry();
 	pi.registerTool(convertToMarkdownTool);
+
+	pi.on("session_start", (_event, ctx) => {
+		if (ctx.mode !== "tui" || ctx.ui.getEditorComponent()) return;
+		ctx.ui.setEditorComponent((tui, theme, keybindings) => new PlaceholderEditor(tui, theme, keybindings, registry));
+	});
 
 	pi.on("input", async (event, ctx) => {
 		if (event.source !== "interactive") return { action: "continue" };
+		const text = registry.expand(event.text);
+		registry.reset();
 		if (process.env.PI_TERMINAL_PLUS_DEBUG === "1") {
-			ctx.ui.notify(`terminal-plus raw: ${JSON.stringify(event.text).slice(0, 200)}`, "info");
+			ctx.ui.notify(`terminal-plus raw: ${JSON.stringify(text).slice(0, 200)}`, "info");
 		}
 
-		const candidates = findPastedPaths(event.text);
-		if (candidates.length === 0) return { action: "continue" };
+		const candidates = findPastedPaths(text);
+		if (candidates.length === 0) return text === event.text ? { action: "continue" } : { action: "transform", text, images: event.images };
 
 		const attachments: ImageContent[] = [];
 		const textBlocks: string[] = [];
@@ -47,7 +59,7 @@ export default function terminalPlus(pi: ExtensionAPI) {
 
 		return {
 			action: "transform",
-			text: [event.text, ...textBlocks].join("\n\n"),
+			text: [text, ...textBlocks].join("\n\n"),
 			images: [...(event.images ?? []), ...images],
 		};
 	});
@@ -60,6 +72,7 @@ type Routed =
 
 /** One route per file: image, then text, otherwise the path stays as typed. */
 async function routeFile(path: string, remainingTextBytes: number): Promise<Routed> {
+	if (documentKindOf(path)) return routeDocument(path, remainingTextBytes);
 	const image = await loadImageFile(path);
 	if (image.ok) {
 		return { kind: "image", image: { type: "image", data: image.image.data, mimeType: image.image.mimeType } };
@@ -73,6 +86,16 @@ async function routeFile(path: string, remainingTextBytes: number): Promise<Rout
 		return { kind: "text", block: formatTextBlock(path, text.file), bytes: text.file.body.length };
 	}
 	return text;
+}
+
+/** Documents become Markdown text, counted against the same per-prompt text budget as code files. */
+async function routeDocument(path: string, remainingTextBytes: number): Promise<Routed> {
+	if (remainingTextBytes <= 0) return { kind: "skip", reason: "text budget used up in this prompt" };
+	const converted = await convertToMarkdown(path);
+	if (!converted.ok) return { kind: "reject", reason: converted.reason };
+	const body = converted.markdown.slice(0, remainingTextBytes);
+	const block = `[document: ${basename(path)}] (${path})\n\n${body}${converted.truncated || body.length < converted.markdown.length ? "\n\n[truncated]" : ""}`;
+	return { kind: "text", block, bytes: body.length };
 }
 
 function modelAcceptsImages(ctx: ExtensionContext): boolean {

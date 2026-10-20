@@ -24,7 +24,7 @@
     "node": ">=22.15.0"
   },
   "scripts": {
-    "test": "node --test test/*.test.ts"
+    "test": "node --import ./test/ts-loader.mjs --test test/*.test.ts"
   },
   "pi": {
     "extensions": [
