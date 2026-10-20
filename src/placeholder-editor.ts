@@ -24,10 +24,15 @@ export class PlaceholderEditor extends CustomEditor {
 		super.insertTextAtCursor(marker ? this.padded(marker) : text);
 	}
 
-	/** Pi calls this for every keystroke path, so stale markers are pruned after each edit. */
+	/**
+	 * Prunes stale markers after each edit so a deleted marker cannot expand. Enter is excluded:
+	 * submitting empties the editor before the input hook runs, and the hook still needs the
+	 * registry to expand markers. The hook resets the registry itself once it has done so.
+	 */
 	handleInput(data: string): void {
+		const isEnter = data === "\r" || data === "\n";
 		super.handleInput(data);
-		this.registry.prune(this.getText());
+		if (!isEnter) this.registry.prune(this.getText());
 	}
 
 	/** `handlePaste` is private in Pi's typings but is the single entry point for bracketed pastes. */
