@@ -7,13 +7,16 @@ import { PlaceholderRegistry } from "./placeholders.js";
  * The registry is shared with the `input` hook, which expands markers on submit.
  */
 export class PlaceholderEditor extends CustomEditor {
+	private readonly registry: PlaceholderRegistry;
+
 	constructor(
 		tui: ConstructorParameters<typeof CustomEditor>[0],
 		theme: ConstructorParameters<typeof CustomEditor>[1],
 		keybindings: ConstructorParameters<typeof CustomEditor>[2],
-		private readonly registry: PlaceholderRegistry,
+		registry: PlaceholderRegistry,
 	) {
 		super(tui, theme, keybindings);
+		this.registry = registry;
 	}
 
 	insertTextAtCursor(text: string): void {
