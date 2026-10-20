@@ -1,5 +1,5 @@
 import { CustomEditor } from "@earendil-works/pi-coding-agent";
-import { PlaceholderRegistry } from "./placeholders.js";
+import { markerSpans, mergeMarkerSegments, PlaceholderRegistry, type TextSegment } from "./placeholders.js";
 
 /**
  * Editor that shows pasted file paths as short markers like `[image #1: shot.png]`.
@@ -33,9 +33,23 @@ export class PlaceholderEditor extends CustomEditor {
 		superHandlePaste.call(this, pastedText);
 	}
 
+	/**
+	 * Pi routes cursor moves, Backspace and Delete through `segment`, so merging our markers
+	 * into single segments makes one Backspace remove a whole marker, like Pi's paste markers.
+	 * `segment` is private in Pi's typings but is the one method the editor consults.
+	 */
+	segment(text: string, mode: "grapheme" | "word"): Iterable<TextSegment> {
+		const base = superSegment.call(this, text, mode);
+		return mergeMarkerSegments(base, text, markerSpans(text, this.registry.ids()));
+	}
+
 	getExpandedText(): string {
 		return this.registry.expand(super.getExpandedText());
 	}
 }
+
+const superSegment = (CustomEditor.prototype as unknown as {
+	segment: (text: string, mode: "grapheme" | "word") => Iterable<TextSegment>;
+}).segment;
 
 const superHandlePaste = (CustomEditor.prototype as unknown as { handlePaste: (text: string) => void }).handlePaste;

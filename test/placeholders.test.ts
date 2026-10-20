@@ -58,3 +58,27 @@ test("reset restarts numbering", () => {
 	registry.reset();
 	assert.equal(registry.register("C:\\a\\two.png"), "[image #1: two.png]");
 });
+
+import { markerSpans, mergeMarkerSegments } from "../src/placeholders.ts";
+
+function charSegments(text: string) {
+	return [...text].map((segment, index) => ({ segment, index, input: text }));
+}
+
+test("markerSpans finds only registered ids", () => {
+	const text = "a [image #1: x.png] b [image #2: y.png]";
+	const spans = markerSpans(text, new Set([2]));
+	assert.deepEqual(spans.map((s) => text.slice(s.start, s.end)), ["[image #2: y.png]"]);
+});
+
+test("mergeMarkerSegments turns a marker into one segment and keeps the rest", () => {
+	const text = "a[image #1: x.png]b";
+	const merged = mergeMarkerSegments(charSegments(text), text, markerSpans(text, new Set([1])));
+	assert.deepEqual(merged.map((s) => s.segment), ["a", "[image #1: x.png]", "b"]);
+	assert.equal(merged[2].index, text.length - 1);
+});
+
+test("mergeMarkerSegments is a no-op without spans", () => {
+	const text = "hello";
+	assert.equal(mergeMarkerSegments(charSegments(text), text, []).length, 5);
+});
