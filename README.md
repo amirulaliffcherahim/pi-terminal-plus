@@ -1,6 +1,6 @@
 # pi-terminal-plus
 
-Pi extension: attach pasted or dropped files to a prompt. Images go to the model natively. Documents and text become Markdown in the prompt.
+Pi extension: attach pasted or dropped files to a prompt, and keep the session's rules and tool set lean. Images go to the model natively. Documents and text become Markdown in the prompt.
 
 ## What it does
 
@@ -25,6 +25,23 @@ Paste with Alt+V (Pi's `app.clipboard.pasteImage`), or drag a file into Windows 
 ## Agent tool
 
 `convert_to_markdown(path)` converts a PDF, DOCX or XLSX so the agent can read it on demand. There are no slash commands.
+
+## Session rules
+
+The same package keeps a long session honest, because rules stated once at session start lose weight as turns pile up:
+
+- **Hard rules, restated last.** A compact rule block is set as `pi_hard_rules`, the last system-prompt section, every turn. Unchanged text stays cached.
+- **Read before edit.** An `edit` or `write` of an existing file you have not read this session is blocked, with the reason. Re-read with `offset`/`limit` around the target.
+- **Two attempts.** A `bash` command that fails twice is refused; so is an `edit` that fails twice, until the file is read again. Report the exact error instead of looping.
+- **Drift notice.** If a turn edited files and ran no command afterwards, a warning says so.
+
+## Lean tool set
+
+Tool schemas are the largest static cost per request (about 8,000 tokens in one measured setup, against roughly 4,900 for the whole system prompt). Each request keeps only the coding set: read, powershell, bash, edit, write, todo, ask_user_question, ask_advisor, memory_*, scratchpad, web_search, fetch_content, get_search_content, convert_to_markdown, worker_diff. Delegation tools are left to pi-worker.
+
+- `PI_TOOLS_KEEP="read,bash,..."` replaces the set.
+- `PI_TOOLS_KEEP="*"` disables trimming.
+- A delegated worker (`PI_WORKER_CHILD=1`) is never trimmed.
 
 ## Install
 

@@ -8,15 +8,22 @@ import { convertToMarkdownTool } from "./convert-tool.js";
 import { convertToMarkdown, documentKindOf } from "./convert.js";
 import { PlaceholderEditor } from "./placeholder-editor.js";
 import { PlaceholderRegistry } from "./placeholders.js";
+import { registerDiscipline } from "./discipline.js";
+import { registerToolTrim } from "./tool-trim.js";
 
 /**
  * Turns pasted or dropped file paths into prompt content on submit.
  * Images attach natively; text and code are inlined as labeled blocks; the path always stays in the prompt.
  * Decided at submit time so the active model is the one that will actually receive the request.
+ *
+ * It also carries what keeps a long session honest: the hard rules restated last every turn, the
+ * checks a machine can make, and the lean tool set. See discipline.ts and tool-trim.ts.
  */
 export default function terminalPlus(pi: ExtensionAPI) {
 	const registry = new PlaceholderRegistry();
 	pi.registerTool(convertToMarkdownTool);
+	registerDiscipline(pi);
+	registerToolTrim(pi);
 
 	pi.on("session_start", (_event, ctx) => {
 		if (ctx.mode !== "tui" || ctx.ui.getEditorComponent()) return;

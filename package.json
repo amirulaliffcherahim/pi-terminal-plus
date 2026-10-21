@@ -1,7 +1,7 @@
 {
   "name": "pi-terminal-plus",
-  "version": "0.1.0",
-  "description": "Attach pasted or dragged files to Pi prompts: images natively, documents converted to Markdown text",
+  "version": "0.2.0",
+  "description": "Attach pasted or dragged files to Pi prompts (images natively, documents as Markdown), restate the hard rules last every turn, and keep the tool set lean",
   "type": "module",
   "main": "./src/index.ts",
   "license": "MIT",
