@@ -1,6 +1,7 @@
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
-import { existsSync } from "node:fs";
-import { isAbsolute, resolve } from "node:path";
+import { existsSync, readFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { isAbsolute, join, resolve } from "node:path";
 
 /**
  * Hard rules that survive a long session.
@@ -54,19 +55,35 @@ function normalizeCommand(value: unknown): string | undefined {
 	return value.trim().replace(/\s+/g, " ");
 }
 
+/**
+ * Personal rules appended after the generic ones: tone, house style, anything that belongs to this
+ * machine rather than the package. Read once per session; a missing file costs nothing.
+ */
+function extraRules(): string {
+	const path = process.env.PI_RULES_EXTRA || join(homedir(), ".pi", "agent", "RULES_EXTRA.md");
+	try {
+		return existsSync(path) ? readFileSync(path, "utf8").trim() : "";
+	} catch {
+		return "";
+	}
+}
+
 export function registerDiscipline(pi: ExtensionAPI) {
 	let state = freshState();
 	let cwd = process.cwd();
+	let rules = RULES;
 
 	pi.on("session_start", (_event, ctx: ExtensionContext) => {
 		state = freshState();
+		const extra = extraRules();
+		rules = extra ? `${RULES}\n\n${extra}` : RULES;
 		if (typeof ctx.cwd === "string") cwd = ctx.cwd;
 	});
 
 	// Recency: the restatement is the last thing the model reads each turn. Unchanged text stays cached.
 	pi.on("before_agent_start", (event, ctx) => {
 		if (typeof ctx.cwd === "string") cwd = ctx.cwd;
-		event.systemPromptOptions.sections.pi_hard_rules = RULES;
+		event.systemPromptOptions.sections.pi_hard_rules = rules;
 	});
 
 	pi.on("tool_call", (event) => {

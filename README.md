@@ -34,6 +34,7 @@ The same package keeps a long session honest, because rules stated once at sessi
 - **Read before edit.** An `edit` or `write` of an existing file you have not read this session is blocked, with the reason. Re-read with `offset`/`limit` around the target.
 - **Two attempts.** A `bash` command that fails twice is refused; so is an `edit` that fails twice, until the file is read again. Report the exact error instead of looping.
 - **Drift notice.** If a turn edited files and ran no command afterwards, a warning says so.
+- **Personal rules.** `~/.pi/agent/RULES_EXTRA.md` (or the `PI_RULES_EXTRA` path) is appended after the generic rules, so tone and house style can live on this machine instead of in the package. Read once per session; a missing file costs nothing.
 
 ## Lean tool set
 

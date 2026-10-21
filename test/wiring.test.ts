@@ -1,5 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import terminalPlus from "../src/index.ts";
 
@@ -49,6 +51,24 @@ test("the hard rules are appended as the last prompt section every turn", () => 
 	runAll("before_agent_start", event, ctx);
 	assert.match(event.systemPromptOptions.sections.pi_hard_rules, /MANDATORY RULES/);
 	assert.match(event.systemPromptOptions.sections.pi_hard_rules, /Two attempts per failing fix/);
+});
+
+test("personal rules from ~/.pi/agent/RULES_EXTRA.md, or PI_RULES_EXTRA, follow the generic ones", () => {
+	const file = join(tmpdir(), "pi-rules-extra-test.md");
+	writeFileSync(file, "VOICE: terse.\n");
+	process.env.PI_RULES_EXTRA = file;
+	try {
+		const { runAll, ctx } = load();
+		const event = { systemPromptOptions: { sections: {} as Record<string, string> } };
+		runAll("session_start", {}, ctx);
+		runAll("before_agent_start", event, ctx);
+		const rules = event.systemPromptOptions.sections.pi_hard_rules;
+		assert.match(rules, /MANDATORY RULES/);
+		assert.ok(rules.endsWith("VOICE: terse."), rules.slice(-60));
+	} finally {
+		delete process.env.PI_RULES_EXTRA;
+		rmSync(file, { force: true });
+	}
 });
 
 test("an edit of an unread file is blocked, and allowed after a read", () => {
