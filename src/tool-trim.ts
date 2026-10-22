@@ -19,7 +19,6 @@ const DEFAULT_KEEP = [
 	"write",
 	"todo",
 	"ask_user_question",
-	"ask_advisor",
 	"advise",
 	"discuss",
 	"memory_read",
